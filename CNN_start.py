@@ -32,7 +32,7 @@ class Net(nn.Module):
         Might make function in order to most accurately create Dense layers
         """
         super(Net, self).__init__()
-        conv1_shape = 5
+        conv1_shape = 3
         pool_1_shape = 2
         pool_2_shape = 3
         conv1_outshape = 20
@@ -58,11 +58,13 @@ class Net(nn.Module):
         inner = self.maxpool1(inner)
         inner = F.relu(self.conv2(inner))
         inner = self.maxpool2(inner)
-        inner, in_shape, mid_shape = self.flatten(inner)
+        inner, in_shape, mid_shape, mid2_shape = self.flatten(inner)
         dense_in = nn.Linear(in_shape, mid_shape)
-        dense_out = nn.Linear(mid_shape, self.output)
+        dense_mid = nn.Linear(mid_shape, mid2_shape)
+        dense_out = nn.Linear(mid2_shape, self.output)
         inner = F.relu(dense_in(inner))
-        output = dense_out(inner)
+        mid = F.relu(dense_mid(inner))
+        output = F.relu(dense_out(mid))
         return output
 
     def flatten(self, input):
@@ -73,8 +75,9 @@ class Net(nn.Module):
         """
         in_shape = input.size()[1] * input.size()[2] * input.size()[3]
         mid_shape = int(in_shape / 5)
+        mid2_shape = int(mid_shape / 10)
         output = input.view(-1, in_shape)
-        return output, in_shape, mid_shape
+        return output, in_shape, mid_shape, mid2_shape
 
 
 def main():
