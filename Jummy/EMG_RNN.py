@@ -182,14 +182,14 @@ if __name__ == '__main__':
     chn = training_set.shape[2]
     data_len = training_set.shape[4]
     print(data_len)
-    for n_hidden in [32, 64, 128, 256]:
+    start = time.time()
+
+    for n_hidden in [8, 16, 32, 64, 128, 256]:
         all_losses = []
         total_loss = 0
         rnn = Net(chn, n_hidden, n_categories)
         # rnn.cuda()
         criterion = nn.NLLLoss()
-
-        start = time.time()
 
         set_size = training_sets * training_per
 
@@ -243,6 +243,10 @@ if __name__ == '__main__':
             col = 'g.-'
         elif n_hidden == 256:
             col = 'k.-'
+        elif n_hidden == 8:
+            col = 'y.-'
+        elif n_hidden == 16:
+            col = 'g.-'
         plt.plot(all_losses, col)
         path = 'Trained_Model/trained_model_%i_hl.out' % n_hidden
         torch.save(rnn, path)
