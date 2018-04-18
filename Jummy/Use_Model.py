@@ -85,6 +85,7 @@ if __name__ == '__main__':
     overwrite = False
     labels = ['cyl', 'hook', 'tip', 'palm', 'spher', 'lat']
     hidden_list = [32, 64, 128, 256]
+    FFwriter = animation.FFMpegWriter(fps=60, codec='libx264')
 
     file_des = 'Visual Data/tsne_data.pickle'
     # print(not Path(file_des))
@@ -124,7 +125,7 @@ if __name__ == '__main__':
         with open(file_des, 'rb') as handle:
             outputdict = pickle.load(handle)
         print('TSNE Data Loaded')
-    int_amount = 30
+    int_amount = 100
     int_dict = interpolation(outputdict, hidden_list, int_amount)
     fig = plt.figure()
     ax = p3.Axes3D(fig)
@@ -141,6 +142,8 @@ if __name__ == '__main__':
     ani = animation.FuncAnimation(fig, update, int_amount * len(hidden_list),
                                   fargs=[int_dict, ob, hidden_list, int_amount], interval=1,
                                   blit=False)
+    ani.save('Howard.mp4', writer=FFwriter)
 
     plt.axis('off')
+
     plt.show()
