@@ -56,11 +56,11 @@ def interpolation(input_dict, hidden_list, int_amount):
             val_list = []
             ran = (step * (int_amount)) + int_val
             char_in = str(ran)
-            if int_val == 0:
+            if int_val == -1:
                 output_dict[char_in] = input_dict[str(hl)]
-            else:
+            elif True:
                 for ins in range(set_size):
-                    move = np.linspace(0, 1.05, len(hidden_list) * int_amount)
+                    move = np.linspace(0, 1.02, len(hidden_list) * int_amount)
                     val = sp.splev(move[ran], int_val_list[ins][0])
                     val = [float(x) for x in val]
                     val_list.append(np.array(val))
@@ -72,7 +72,7 @@ def interpolation(input_dict, hidden_list, int_amount):
 def update(move, input, ob, hs, int_amount, type):
     """Update Moving animation."""
     in_ = str(move)
-    time.sleep(1)
+    # time.sleep(0.5)
     if num_com == 3:
         if move % int_amount == 0:
             val = (move + 1) / int_amount
@@ -80,7 +80,9 @@ def update(move, input, ob, hs, int_amount, type):
             ax.set_title('tSNE of RNN with ' + lnum + ' size for hidden layer', y=1)
         ob._offsets3d = (input[in_][:, 0], input[in_][:, 1], input[in_][:, 2])
     elif num_com == 2:
+        print(move % int_amount)
         if move % int_amount == 0:
+
             val = (move + 1) / int_amount
             lnum = str(hs[int(val)])
             ax.set_title('tSNE of RNN with ' + lnum + ' size for hidden layer', y=1)
@@ -95,7 +97,7 @@ if __name__ == '__main__':
     # FFwriter = animation.FFMpegWriter(fps=60, codec='libx264')
 
     file_des = 'Visual Data/tsne_data.pickle'
-    num_com = 2
+    num_com = 3
     if not Path(file_des).is_file() or overwrite:
         tsne = TSNE(n_components=num_com, verbose=1, perplexity=100, n_iter=300)
 
@@ -122,7 +124,7 @@ if __name__ == '__main__':
             tsne_input = tsne_input / np.mean(tsne_input)
             label_color = np.array(label_list)
             tsne_embedded = tsne.fit_transform(tsne_input)
-            outputdict[str(step)] = tsne_embedded
+            outputdict[str(hidden_size)] = tsne_embedded
         outputdict['Label Color'] = label_color
         outputdict['Size Set'] = full_set.shape[0]
         with open(file_des, 'wb') as handle:
@@ -132,9 +134,9 @@ if __name__ == '__main__':
         with open(file_des, 'rb') as handle:
             outputdict = pickle.load(handle)
         print('TSNE Data Loaded')
-    int_amount = 10
-    # int_dict = interpolation(outputdict, hidden_list, int_amount)
-    int_dict = outputdict
+    int_amount = 150
+    int_dict = interpolation(outputdict, hidden_list, int_amount)
+    # int_dict = outputdict
     if num_com == 3:
         fig = plt.figure()
         ax = p3.Axes3D(fig)
@@ -158,9 +160,9 @@ if __name__ == '__main__':
         com = '0'
         ob = ax.scatter(int_dict[com][:, 0], int_dict[com][:, 1], c=outputdict['Label Color'])
 
-        # ani_amount = int_amount * len(hidden_list)
+        ani_amount = int_amount * len(hidden_list)
 
-        ani_amount = len(hidden_list)
+        # ani_amount = len(hidden_list)
 
         ani = animation.FuncAnimation(fig, update, ani_amount,
                                       fargs=[int_dict, ob, hidden_list, int_amount, num_com], interval=1,
@@ -168,6 +170,6 @@ if __name__ == '__main__':
         ax.set_ylim([-20, 20])
         ax.set_xlim([-20, 20])
 
-    # plt.axis('off')
+    plt.axis('off')
 
     plt.show()
