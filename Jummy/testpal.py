@@ -21,7 +21,7 @@ class Net(nn.Module):
     This is the class for the network for training
     """
 
-    def __init__(self, input_size, hidden_size, output_size):
+    def __init__(self, batches, input_size, hidden_size, output_size):
         """
         Initializer.
 
@@ -29,10 +29,11 @@ class Net(nn.Module):
         """
         super(Net, self).__init__()
         self.hidden_size = hidden_size
-
-        self.i2h = nn.Linear(input_size + hidden_size, hidden_size)
-        self.i2o = nn.Linear(input_size + hidden_size, output_size)
+        self.num_layer = 10
+        self.lstm = nn.LSTM(input_size, hidden_size, self.num_layer)
         self.softmax = nn.LogSoftmax(dim=1)
+        self.batches = batches
+        self.linout = nn.Linear(hidden_size, output_size)
 
     def forward(self, input, hidden):
         """
@@ -41,9 +42,8 @@ class Net(nn.Module):
         Operations for (input, hidden) to move through the
         network and eventually become the (output, hidden)
         """
-        combined = torch.cat((input, hidden), 1)
-        hidden = self.i2h(combined)
-        output = self.i2o(combined)
+        output, hidden = self.lstm(input, hidden)
+        output = self.linout(output.view(-1, output.size(2)))
         output = self.softmax(output)
         return output, hidden
 
@@ -54,7 +54,7 @@ class Net(nn.Module):
         Start hidden tensor full of zeros by
         created size
         """
-        return Variable(torch.randn(1, self.hidden_size))
+        return Variable(torch.randn(2, self.num_layer, self.batches, self.hidden_size))
 
 
 def making_tensor(data, chn, type=None):
@@ -64,21 +64,22 @@ def making_tensor(data, chn, type=None):
     Kek
     data - chn - data points
     """
-    tensor = torch.zeros(data.shape[1], 1, chn)
-    for ch_am in range(chn):
-        for li, val in enumerate(data[ch_am, :]):
-            tensor[li][0][ch_am] = val
-
     if type == 'moving':
         """For raw data only"""
-        # rand_size = np.random.randint(int(data.shape[1] / 10), int(data.shape[1] / 5))
-        rand_size = 10
+        rand_size = np.random.randint(15, 25)
+        # rand_size = np.random.randint(int(data.shape[2] / 50), int(data.shape[2] / 5))
         rand_start = np.random.randint(0, data.shape[1] - rand_size)
         rand_end = rand_start + rand_size
-        tensor = torch.zeros(rand_size, 1, chn)
+        tensor = torch.zeros(rand_size, 1, 1, chn)
         for ch_am in range(chn):
             for li, val in enumerate(data[ch_am, rand_start:rand_end]):
-                tensor[li][0][ch_am] = val
+                tensor[li][0][0][ch_am] = val
+    else:
+        tensor = torch.zeros(data.shape[1], 1, 1, chn)
+        for ch_am in range(chn):
+            for li, val in enumerate(data[ch_am, :]):
+                tensor[li][0][0][ch_am] = val
+
     return tensor
 
 
@@ -98,8 +99,9 @@ def rand(type=None):
                         :,
                         np.random.randint(0, training_sets - 1),
                         :]
-    label_tensor = Variable(torch.LongTensor([label]))
-    data_tensor = Variable(making_tensor(data, chn, type=type))
+    label_in = [label for x in range(1)]
+    label_tensor = Variable(torch.LongTensor(label_in))
+    data_tensor = Variable(making_tensor(data, chn))
     return label, data, label_tensor, data_tensor
 
 
@@ -113,7 +115,7 @@ def train(label_tensor, data_tensor):
 
     rnn.zero_grad()
 
-    for i in range(data_tensor.size()[0]):
+    for i in range(data_tensor.size()[1]):
         output, hidden = rnn(data_tensor[i], hidden)
 
     loss = criterion(output, label_tensor)
@@ -160,7 +162,7 @@ if __name__ == '__main__':
     all_losses = []
     labels = ['cyl', 'hook', 'tip', 'palm', 'spher', 'lat']
     # labels = ['Even', 'Odd', 'Rod', 'Smod', 'Dod']
-    learning_rate = 0.001
+    learning_rate = 0.0001
     total_loss = 0
     # numbers of different movement types
 
@@ -176,7 +178,7 @@ if __name__ == '__main__':
     for n_hidden in [128]:
         all_losses = []
         total_loss = 0
-        rnn = Net(chn, n_hidden, n_categories)
+        rnn = Net(1, chn, n_hidden, n_categories)
         # rnn.cuda()
         criterion = nn.NLLLoss()
 
@@ -211,15 +213,14 @@ if __name__ == '__main__':
         for label in range(len(labels)):
             suc = 0
             attempts = 0
-            for per in range(test_set.shape[1]):
-                for ex in range(test_set.shape[3]):
-                    data = test_set[label, per, :, ex, :]
-                    input_data = Variable(making_tensor(data, chn))
-                    output = evaluate(input_data)
-                    guess, guess_i = labelout(output)
-                    if guess_i == label:
-                        suc += 1
-                    attempts += 1
+            for ex in range(test_set.shape[3]):
+                data = test_set[label, :, :, ex, :]
+                input_data = Variable(making_tensor(data, chn, 'moving'))
+                output = evaluate(input_data)
+                guess, guess_i = labelout(output)
+                if guess_i == label:
+                    suc += 1
+                attempts += 1
             accuracy = (suc / attempts) * 100
             print('\n\n Accuracy of label %s is: %f' % (labels[label],
                                                         accuracy))
@@ -240,4 +241,3 @@ if __name__ == '__main__':
         path = 'Trained_Model/trained_model_%i_hl.out' % n_hidden
         # torch.save(rnn, path)
     plt.show()
-
