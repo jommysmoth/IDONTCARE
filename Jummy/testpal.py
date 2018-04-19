@@ -198,7 +198,7 @@ if __name__ == '__main__':
 
             if iter % print_every == 0:
                 guess, guess_i = labelout(output)
-                correct = '✓' if guess_i == label else '✗ (%s)' % labels[label]
+                correct = 'good job' if guess_i == label else 'bad boy (%s)' % labels[label]
                 print('%d %d%% (%s) %.4f / %s %s' % (iter,
                                                      iter / n_iter * 100,
                                                      timesince(start),
