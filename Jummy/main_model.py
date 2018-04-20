@@ -114,9 +114,7 @@ def labelout(output):
     return labels[label], label
 
 
-def plot_confusion_matrix(cm, classes,
-                          title='Confusion matrix',
-                          cmap=plt.cm.Blues):
+def plot_confusion_matrix(cm, classes, title, cmap=plt.cm.Blues):
     """
     Function prints and plots the confusion matrix.
 
@@ -154,19 +152,20 @@ if __name__ == '__main__':
     training_per = training_set.shape[1]
     chn = training_set.shape[2]
     data_len = training_set.shape[4]
-    print(data_len)
+    save_model = False
     start = time.time()
+    conf_m_list = []
+    hidden_list = [8, 16, 32, 64, 128, 256]
 
-    for n_hidden in [128]:
+    for n_hidden in hidden_list:
         all_losses = []
         total_loss = 0
         rnn = Net(chn, n_hidden, n_categories)
-        # rnn.cuda()
         criterion = nn.NLLLoss()
 
         set_size = training_sets * training_per
 
-        n_iter = 250000
+        n_iter = 250
         print_every = n_iter / 10
         plot_every = n_iter / 50
         plot_loss = 0
@@ -226,11 +225,14 @@ if __name__ == '__main__':
         elif n_hidden == 16:
             col = 'g.-'
         plt.plot(all_losses, col)
-        path = 'Trained_Model/trained_model_%i_hl.out' % n_hidden
-        # torch.save(rnn, path)
+        if save_model:
+            path = 'Trained_Model/trained_model_%i_hl.out' % n_hidden
+            torch.save(rnn, path)
         confm = confusion_matrix(y_test, y_pred)
+        conf_m_list.append(confm)
+    conf_m_plot = np.stack(conf_m_list, axis=0)
+    for plot in range(conf_m_plot.shape[0]):
+        title_conf = 'Predicted vs. True for n_hidden = %i' % hidden_list[plot]
         plt.figure()
-        title_conf = 'Predicted vs. True for n_hidden = %i' % n_hidden
-        plot_confusion_matrix(confm, classes=labels, title=title_conf)
-
+        plot_confusion_matrix(conf_m_plot[plot, :, :], classes=labels, title=title_conf)
     plt.show()
