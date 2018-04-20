@@ -7,8 +7,6 @@ from __future__ import division
 import ImportHandData
 import numpy as np
 from statsmodels.tsa.ar_model import AR
-from scipy.signal import decimate
-import matplotlib.pyplot as plt
 
 
 def makenp(signal_per, label, chn_amount):
@@ -39,13 +37,6 @@ def ar_fit(sig):
     ar_res = ar_mod.fit(trend='nc')
     ar_coefficients = ar_res.params
     return ar_coefficients
-
-
-def movingaverage(values, window):
-    """MA func."""
-    weights = np.repeat(1.0, window) / window
-    sma = np.convolve(values, weights, 'valid')
-    return sma
 
 
 def alt_training(training_set):
@@ -88,12 +79,3 @@ def main():
 
     print('Data Processed And Loaded In')
     return x_train_full, x_test_full, training_set
-
-
-if __name__ == '__main__':
-    # data_AR = main()
-    signal = ImportHandData.load_hand_signals()
-    ch_list = [1, 2]
-    labels = ['cyl', 'hook', 'tip', 'palm', 'spher', 'lat']
-    training_set_raw = makefullset(signal, labels, ch_list)
-    print(training_set_raw.shape)
