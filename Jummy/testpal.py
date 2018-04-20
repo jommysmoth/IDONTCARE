@@ -172,7 +172,6 @@ if __name__ == '__main__':
     training_per = training_set.shape[1]
     chn = training_set.shape[2]
     data_len = training_set.shape[4]
-    print(data_len)
     start = time.time()
 
     for n_hidden in [128]:

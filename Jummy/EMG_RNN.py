@@ -3,7 +3,7 @@ Recurrent Neural Network.
 
 Setting it up bois
 """
-
+import itertools
 import numpy as np
 import torch
 import torch.nn as nn
@@ -12,6 +12,7 @@ import time
 import math
 import loadin
 import matplotlib.pyplot as plt
+from sklearn.metrics import confusion_matrix
 
 
 class Net(nn.Module):
@@ -155,12 +156,47 @@ def labelout(output):
     return labels[label], label
 
 
+def plot_confusion_matrix(cm, classes,
+                          normalize=False,
+                          title='Confusion matrix',
+                          cmap=plt.cm.Blues):
+    """
+    Function prints and plots the confusion matrix.
+
+    Normalization can be applied by setting `normalize=True`.
+    """
+    if normalize:
+        cm = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
+        print("Normalized confusion matrix")
+    else:
+        print('Confusion matrix, without normalization')
+
+    print(cm)
+
+    plt.imshow(cm, interpolation='nearest', cmap=cmap)
+    plt.title(title)
+    plt.colorbar()
+    tick_marks = np.arange(len(classes))
+    plt.xticks(tick_marks, classes, rotation=45)
+    plt.yticks(tick_marks, classes)
+
+    fmt = '.2f' if normalize else 'd'
+    thresh = cm.max() / 2.
+    for i, j in itertools.product(range(cm.shape[0]), range(cm.shape[1])):
+        plt.text(j, i, format(cm[i, j], fmt),
+                 horizontalalignment="center",
+                 color="white" if cm[i, j] > thresh else "black")
+
+    plt.tight_layout()
+    plt.ylabel('True label')
+    plt.xlabel('Predicted label')
+
 if __name__ == '__main__':
 
     all_losses = []
     labels = ['cyl', 'hook', 'tip', 'palm', 'spher', 'lat']
     # labels = ['Even', 'Odd', 'Rod', 'Smod', 'Dod']
-    learning_rate = 0.001
+    learning_rate = 0.0005
     total_loss = 0
     # numbers of different movement types
 
@@ -173,7 +209,7 @@ if __name__ == '__main__':
     print(data_len)
     start = time.time()
 
-    for n_hidden in [128]:
+    for n_hidden in [256]:
         all_losses = []
         total_loss = 0
         rnn = Net(chn, n_hidden, n_categories)
@@ -182,14 +218,14 @@ if __name__ == '__main__':
 
         set_size = training_sets * training_per
 
-        n_iter = 25000
+        n_iter = 25
         print_every = n_iter / 10
         plot_every = n_iter / 50
         plot_loss = 0
 
         for iter in range(1, n_iter + 1):
 
-            label, data, label_tensor, data_tensor = rand('moving')
+            label, data, label_tensor, data_tensor = rand()
             output, loss = train(label_tensor, data_tensor)
             total_loss += loss
             plot_loss += loss
@@ -208,6 +244,8 @@ if __name__ == '__main__':
                 all_losses.append(plot_loss / plot_every)
                 plot_loss = 0
 
+        y_pred = []
+        y_test = []
         for label in range(len(labels)):
             suc = 0
             attempts = 0
@@ -217,13 +255,16 @@ if __name__ == '__main__':
                     input_data = Variable(making_tensor(data, chn))
                     output = evaluate(input_data)
                     guess, guess_i = labelout(output)
+                    y_pred.append(guess_i)
+                    y_test.append(label)
                     if guess_i == label:
                         suc += 1
                     attempts += 1
             accuracy = (suc / attempts) * 100
             print('\n\n Accuracy of label %s is: %f' % (labels[label],
                                                         accuracy))
-        plt.title('Amount of samples %i' % int(training_sets * training_per))
+        plt.title('Loss after %i interations, and samples %i' % (n_iter,
+                                                                 int(training_sets * training_per * len(labels))))
         if n_hidden == 32:
             col = 'r.-'
         elif n_hidden == 64:
@@ -239,5 +280,9 @@ if __name__ == '__main__':
         plt.plot(all_losses, col)
         path = 'Trained_Model/trained_model_%i_hl.out' % n_hidden
         # torch.save(rnn, path)
-    plt.show()
+        confm = confusion_matrix(y_test, y_pred)
+        print(confm)
+        plt.figure()
+        plot_confusion_matrix(confm, classes=labels, title='Predicted vs. True')
 
+    plt.show()
