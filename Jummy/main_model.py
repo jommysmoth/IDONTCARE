@@ -152,7 +152,7 @@ if __name__ == '__main__':
     training_per = training_set.shape[1]
     chn = training_set.shape[2]
     data_len = training_set.shape[4]
-    save_model = False
+    save_model = True
     start = time.time()
     conf_m_list = []
     hidden_list = [8, 16, 32, 64, 128, 256]
@@ -161,11 +161,11 @@ if __name__ == '__main__':
         all_losses = []
         total_loss = 0
         rnn = Net(chn, n_hidden, n_categories)
-        criterion = nn.NLLLoss()
+        criterion = nn.CrossEntropyLoss()
 
         set_size = training_sets * training_per
 
-        n_iter = 250
+        n_iter = 100000
         print_every = n_iter / 10
         plot_every = n_iter / 50
         plot_loss = 0

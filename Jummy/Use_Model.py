@@ -4,7 +4,7 @@ from sklearn.manifold import TSNE
 from torch.autograd import Variable
 import torch
 import loadin
-from EMG_RNN import Net
+from RNN import Net
 import numpy as np
 import matplotlib.pyplot as plt
 import mpl_toolkits.mplot3d.axes3d as p3
@@ -80,7 +80,6 @@ def update(move, input, ob, hs, int_amount, type):
             ax.set_title('tSNE of RNN with ' + lnum + ' size for hidden layer', y=1)
         ob._offsets3d = (input[in_][:, 0], input[in_][:, 1], input[in_][:, 2])
     elif num_com == 2:
-        print(move % int_amount)
         if move % int_amount == 0:
 
             val = (move + 1) / int_amount
@@ -94,10 +93,10 @@ if __name__ == '__main__':
     overwrite = False
     labels = ['cyl', 'hook', 'tip', 'palm', 'spher', 'lat']
     hidden_list = [8, 16, 32, 64, 128, 256]
-    # FFwriter = animation.FFMpegWriter(fps=60, codec='libx264')
+    FFwriter = animation.FFMpegWriter(fps=60, codec='libx264')
 
     file_des = 'Visual Data/tsne_data.pickle'
-    num_com = 3
+    num_com = 2
     if not Path(file_des).is_file() or overwrite:
         tsne = TSNE(n_components=num_com, verbose=1, perplexity=100, n_iter=300)
 
@@ -130,17 +129,20 @@ if __name__ == '__main__':
         with open(file_des, 'wb') as handle:
             pickle.dump(outputdict, handle, protocol=pickle.HIGHEST_PROTOCOL)
         print('TSNE Data Saved')
+        exit()
     else:
         with open(file_des, 'rb') as handle:
             outputdict = pickle.load(handle)
         print('TSNE Data Loaded')
-    int_amount = 150
+    int_amount = 50
     int_dict = interpolation(outputdict, hidden_list, int_amount)
     # int_dict = outputdict
     if num_com == 3:
         fig = plt.figure()
         ax = p3.Axes3D(fig)
         com = '0'
+
+        com = str(hidden_list[0])
         ax.set_xlim3d([-15, 15])
 
         ax.set_ylim3d([-15, 15])
@@ -151,13 +153,18 @@ if __name__ == '__main__':
         ob = ax.scatter(int_dict[com][:, 0], int_dict[com][:, 1], int_dict[com][:, 2],
                         c=outputdict['Label Color'])
 
-        ani = animation.FuncAnimation(fig, update, int_amount * len(hidden_list),
+        # ani_amount = len(hidden_list)
+
+        ani_amount = int_amount * len(hidden_list)
+
+        ani = animation.FuncAnimation(fig, update, ani_amount,
                                       fargs=[int_dict, ob, hidden_list, int_amount, num_com], interval=1,
                                       blit=False)
-        # ani.save('Howard.mp4', writer=FFwriter)
+        ani.save('Int_3d.mp4', writer=FFwriter)
     elif num_com == 2:
         fig, ax = plt.subplots()
         com = '0'
+        # com = str(hidden_list[0])
         ob = ax.scatter(int_dict[com][:, 0], int_dict[com][:, 1], c=outputdict['Label Color'])
 
         ani_amount = int_amount * len(hidden_list)
@@ -170,6 +177,7 @@ if __name__ == '__main__':
         ax.set_ylim([-20, 20])
         ax.set_xlim([-20, 20])
 
+        ani.save('Int_2d.mp4', writer=FFwriter)
     plt.axis('off')
 
     plt.show()
