@@ -165,7 +165,7 @@ if __name__ == '__main__':
 
         set_size = training_sets * training_per
 
-        n_iter = 100000
+        n_iter = 250000
         print_every = n_iter / 10
         plot_every = n_iter / 50
         plot_loss = 0
@@ -225,6 +225,7 @@ if __name__ == '__main__':
         elif n_hidden == 16:
             col = 'g.-'
         plt.plot(all_losses, col)
+        plt.legend(labels=hidden_list)
         if save_model:
             path = 'Trained_Model/trained_model_%i_hl.out' % n_hidden
             torch.save(rnn, path)
