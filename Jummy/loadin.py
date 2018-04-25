@@ -71,7 +71,7 @@ def main():
         train_split = 0.8
         train_r = int(train_split * training_set.shape[3])
         x_train = training_set[:, person, :, :train_r, :]
-        x_test = training_set[:, person, :, :-train_r, :]
+        x_test = training_set[:, person, :, -train_r:, :]
         train_list.append(x_train)
         test_list.append(x_test)
     x_train_full = np.stack(train_list, axis=1)
