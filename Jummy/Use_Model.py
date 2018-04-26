@@ -96,7 +96,7 @@ if __name__ == '__main__':
     FFwriter = animation.FFMpegWriter(fps=60, codec='libx264')
 
     file_des = 'Visual Data/tsne_data.pickle'
-    num_com = 2
+    num_com = 3
     if not Path(file_des).is_file() or overwrite:
         tsne = TSNE(n_components=num_com, verbose=1, perplexity=100, n_iter=300)
 
@@ -136,7 +136,7 @@ if __name__ == '__main__':
         print('TSNE Data Loaded')
     int_amount = 50
     int_dict = interpolation(outputdict, hidden_list, int_amount)
-    # int_dict = outputdict
+    final_out = outputdict['256']
     if num_com == 3:
         fig = plt.figure()
         ax = p3.Axes3D(fig)
@@ -160,7 +160,21 @@ if __name__ == '__main__':
         ani = animation.FuncAnimation(fig, update, ani_amount,
                                       fargs=[int_dict, ob, hidden_list, int_amount, num_com], interval=1,
                                       blit=False)
-        ani.save('Int_3d.mp4', writer=FFwriter)
+        # ani.save('Int_3d.mp4', writer=FFwriter)
+        plt.axis('off')
+
+        fig2 = plt.figure()
+        ax2 = p3.Axes3D(fig2)
+
+        ax2.set_xlim3d([-10, 10])
+
+        ax2.set_ylim3d([-10, 10])
+
+        ax2.set_zlim3d([-10, 10])
+
+        ax2.scatter(final_out[:, 0], final_out[:, 1], final_out[:, 2], c=outputdict['Label Color'])
+        plt.title('Final t-SNE output')
+        plt.axis('off')
     elif num_com == 2:
         fig, ax = plt.subplots()
         com = '0'
@@ -176,8 +190,13 @@ if __name__ == '__main__':
                                       blit=False)
         ax.set_ylim([-20, 20])
         ax.set_xlim([-20, 20])
+        plt.axis('off')
 
-        ani.save('Int_2d.mp4', writer=FFwriter)
-    plt.axis('off')
+        # ani.save('Int_2d.mp4', writer=FFwriter)
 
+        plt.figure()
+
+        plt.scatter(final_out[:, 0], final_out[:, 1], c=outputdict['Label Color'])
+        plt.title('Final t-SNE output')
+    
     plt.show()
